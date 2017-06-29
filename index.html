@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Vue App In Action</title>
+	<script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+	<div id="app">
+		{{ message }}
+	</div>
+	<div id="app-2">
+		<span v-bind:title="message">
+			Hover your mouse overme for a few seconds to see my dynamically bound title
+		</span>
+	</div>
+
+	<div id="app-3">
+		<p v-if="seen">Now you see me</p>
+	</div>
+
+	<div id="app-4">
+		<ol>
+			<li v-for="todo in todos">
+				{{ todo.text }}
+			</li>
+		</ol>
+	</div>
+
+	<div id="app-5">
+		<p>{{ message }}</p>
+		<button v-on:click="reverseMessage">Click me to Reverse Msg</button>
+	</div>
+
+	<div id="app-6">
+		<p>{{ message | capitalize }}</p>
+		<input v-model='message'>
+		<p>{{ reversedMsg }}</p>
+	</div>
+
+	<div id="app-7">
+		<ol>
+			<todo-item
+				v-for="item in groceryList"
+				v-bind:todo="item"
+				v-bind:key="item.id" >
+			</todo-item>
+		</ol>
+	</div>
+
+	<div id="watch-example">
+		<p>
+			<input v-model="question">
+		</p>
+		<p> {{ answer }}</p>
+	</div>
+
+	<div id="counterComponent">
+		<simple-counter></simple-counter>
+		<simple-counter></simple-counter>
+		<simple-counter></simple-counter>
+	</div>
+
+	<div id="count2">
+		<simple-counter></simple-counter>
+	</div>
+	<div id="sendMsgToChild">
+		let's bind   , {{ syncdParent }}
+		<input v-model="syncdParent"><br>
+		<input v-model="parentMsg"><br>
+		<child v-bind:message="12"></child><br>
+		<child v-bind:message="coumputedparentMsg"></child><br>
+		next is a two way example
+		<two-way-bindcom :foo.sync="syncdParent" :foocomputed.sync="syncdParent">
+			HAHA
+		</two-way-bindcom>
+	</div>
+
+	<div id="counter-event-example">
+		<p>{{ total }}</p>
+		
+		<button-counter v-on:increment="incrementTotal"> </button-counter>
+		<button-counter v-on:increment="incrementTotal"> </button-counter>
+
+	</div>
+
+	<div id="appCur">
+		<currency-input
+			label="Price"
+			v-model="price"
+		></currency-input>
+		<currency-input
+			label="Shipping"
+			v-model="shipping"
+		></currency-input>
+		<currency-input
+			label="Handling"
+			v-model="handling"
+		></currency-input>
+		<currency-input
+			label="Discount"
+			v-model="discount"
+		></currency-input>
+
+		<p>Total : $ {{ total }}</p>
+
+	</div>
+	<div id="applyout">
+		<app-layout>
+			<h1 slot="header"> Here might be page title </h1>
+			<p>A paragraph for the main content</p>
+			<p> and anoterh one</p>
+			<p slot="footer">Here's some contact info</p>
+		</app-layout>
+	</div>
+	<div id="awesomelist">
+		<my-awesome-list >
+			<template slot="item" scope="props">
+				<li>{{ props.text }}</li>
+			</template>			
+		</my-awesome-list>
+	</div>
+
+	<script src="https://unpkg.com/axios@0.12.0/dist/axios.min.js"></script>
+	<script src="https://unpkg.com/lodash@4.13.1/lodash.min.js"></script>
+	<script src="https://cdn.rawgit.com/chrisvfritz/5f0a639590d6e648933416f90ba7ae4e/raw/974aa47f8f9c5361c5233bd56be37db8ed765a09/currency-validator.js"></script>
+	<script type="text/javascript">
+		//register
+		var data = { counter : 0};
+		Vue.component('my-awesome-list', {
+			template : `<ul>\
+				<slot  name="item"\
+				v-for="item in items"\
+				:text="item.text"\
+				>\
+				Sorry ! you get trouble				
+				</slot>\
+			</ul> \
+			`,
+			props : {
+				items : {
+					default : function () {
+						return [
+							{ text : 'FirstLi'},
+							{ text : 'SecondLi'},
+							{ text : 'ThirdLi'},
+							{ text : 'Fourth'}
+						]
+					}
+				}
+			}
+		});
+		Vue.component('app-layout', {
+			template : `\
+				<div class="container">\
+					<header>\
+						<slot name="header"></slot>\
+					</header>\
+					<main>\
+						<slot></slot>\
+					</main>\
+					<footer>\
+						<slot name="footer"></slot>\
+					</footer>\
+				</div>\
+			`
+		});
+		Vue.component('currency-input', {
+			template : `\
+				<div>\
+					<label v-if="label">{{ label }}</label>\
+					$\
+					<input\
+					 ref="input"\
+					 v-bind:value="value"\
+					 v-on:input="updateValue($event.target.value)"\
+					 v-on:focus="selectAll"\
+					 v-on:blur="formatValue"\
+					>\			
+					</input>\
+				</div>\
+			`,
+			props : {
+				value : {
+					type : Number,
+					default : 0
+				},
+				label : {
+					type : String,
+					default : ''
+				}
+			},
+			mounted : function () {
+				this.formatValue();
+			},
+			methods : {
+				formatValue : function () {
+					this.$refs.input.value = currencyValidator.format(this.value);
+				},
+				selectAll : function (event) {
+					setTimeout(function () {
+						event.target.select();
+					}, 0)
+				},
+				updateValue : function(value) {
+					var result  =  currencyValidator.parse(value, this.value);
+					if (result.warning) {
+						this.$refs.input.value = result.value;
+					}
+					this.$emit('input', result.value);
+				}
+			}
+		});
+
+		new Vue({
+			el : '#awesomelist'
+		});
+		new Vue({
+			el : '#applyout'
+		});
+
+		new Vue({
+			el : '#appCur',
+			data : {
+				price : 0,
+				shipping : 0,
+				handling : 0,
+				discount : 0
+			},
+			computed : {
+				total : function () {
+					return ((
+						this.price * 100 +
+						this.shipping * 100 +
+						this.handling * 100 +
+						this.discount * 100
+						) / 100).toFixed(2)
+				}
+			}
+		});
+
+
+		Vue.component('two-way-bindcom', {
+			template : '<div><input v-model="foocomputed"> <br><slot>display if no content to distrubuted</slot></div>',
+			props : ['foo'],
+			computed : {
+				foocomputed : function () {
+					console.log('this.foo : ' + this.foo);
+					var tempvar = this.foo;
+
+					return tempvar;
+				}
+			},
+			watch : {
+				foocomputed : function (newQ) {
+					console.log('foocomputed changed : ' + newQ);
+					this.$emit('update:foo', newQ);
+				}
+			},
+		});
+		Vue.component('button-counter', {
+			template : '<button v-on:click="increment">{{ counter}} </button>',
+			data : function () {
+				return {
+					counter : 0
+				}
+			},
+			methods : {
+				increment : function () {
+					this.counter += 1 ;
+					this.$emit('increment');
+				}
+			}
+		});
+		Vue.component('todo-item', {
+				props : ['todo'],
+				template : '<li>{{ todo.text }}</li>'
+			});
+		Vue.component('simple-counter', {
+			template : '<button v-on:click="counter +=1 ">{{ counter }}</button>',
+			data : function() {
+				return {
+					counter : 0
+				};
+			}
+		});
+		Vue.component('child', {
+		
+			props : {
+				message : {
+					type : Number,
+					default : 199
+				}
+			},
+			template : '<span>{{ message }}</span>'
+		});
+
+
+		new Vue({
+			el : '#counterComponent'
+		});
+		new Vue({
+			el : '#count2'
+		});
+		new Vue({
+			el : '#sendMsgToChild',
+			data : {
+				parentMsg : 999 ,
+				syncdParent : 'syncdParentDefault'
+			},
+			computed : {
+				coumputedparentMsg : function () {
+					if (!isNaN(this.parentMsg)) {
+						return Number(this.parentMsg);
+					}
+					return this.parentMsg;
+
+					// console.log('parentMsg type : ' + typeof this.parentMsg);
+					
+				}
+
+			}
+		});
+
+		new Vue({
+			el : '#counter-event-example',
+			data : {
+				total : 0
+			},
+			methods : {
+				incrementTotal : function () {
+					this.total += 1 ;
+				}
+			}
+
+		});
+
+		var app6data = {
+					message : 'initial message'
+				};
+
+		var app = new Vue({
+			el : '#app',
+			data : app6data
+			}),
+			app2 = new Vue({
+				el : '#app-2',
+				data : {
+					message : 'You loaded this page on ' + new Date()
+				}
+			}),
+			app3 = new Vue({
+				el : '#app-3',
+				data : {
+					seen : false
+				}
+			}),
+			app4 = new Vue({
+				el : '#app-4',
+				data : {
+					todos : [
+						{ text : 'learn how to love'},
+						{ text : 'endeavor in do your best'},
+						{ text : 'rationally accept any critize'}
+					]
+				}
+
+			}),
+			app5 = new Vue({
+				el : "#app-5",
+				data : {
+					message : 'love of concrete is hard to demolish'
+				},
+				methods : {
+					reverseMessage : function () {
+						this.message = this.message.split('').reverse().join('');
+					}
+				}
+			}),
+			app6 = new Vue({
+				el : '#app-6',
+				data : app6data,
+				computed : {
+					reversedMsg : function () {
+						return this.message.split('').reverse().join('');
+					}
+				},
+				filters : {
+					capitalize : function (value) {
+						if (!value) return;
+						value = value.toString();
+						return value.charAt(0).toUpperCase() + value.slice(1) ;
+					}
+				}
+			}),
+			app7 = new Vue({
+				el : "#app-7",
+				data : {
+					groceryList : [
+						{id : 0, text : 'vegatables'},
+						{id : 1, text : 'cheese'},
+						{id : 2, text : 'broccli'}
+					]
+				}
+			});
+
+			app6.$watch('message', function(newval, oldval) {
+				// console.log('this : ' + this + ', old : ' + oldval + ' ,newval : ' + newval);
+				console.dir(this);
+			});
+
+			var watchExampleVM  = new Vue({
+				el : '#watch-example',
+				data : {
+					question : '',
+					answer : 'i wonnt give you answer until you ask first!'
+				},
+				watch : {
+					question : function (newQ) {
+						this.answer = 'wating until you stop typing';
+						this.getAnswer();
+					}
+				},
+				methods: {
+					getAnswer : _.debounce(function () {
+						if (this.question.indexOf('?') === -1 ) {
+							this.answer = 'Question usually contain a question mark';
+							return;
+						}
+						this.answer = 'Thinking';		
+						var vm = this;
+						axios.get('https://yesno.wtf/api')
+							.then(function (response) {
+								vm.answer = _.capitalize(response.data.answer);
+							})
+							.catch(function (error) {
+								vm.answer = 'Error ! Could not reach the API. ' + error;
+							});
+					}, 500)
+				}
+			});
+
+
+
+	</script>
+
+</body>
+</html>
