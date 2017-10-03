@@ -3,8 +3,762 @@
 <head>
 	<title>Vue App In Action</title>
 	<script src="https://unpkg.com/vue"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/TweenLite.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
+	<script src="https://unpkg.com/tween.js@16.3.4"></script>
+	<script src="https://unpkg.com/color-js@1.0.3/color.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/animate.css">
 </head>
+<style type="text/css">
+	* {
+		box-sizing: border-box;
+	}
+	.fade-enter-active {
+	  	animation: bounce-in 1s;
+	}
+
+	.fade-leave-active {
+		transition: opacity 1.5s
+	}
+
+	.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+	  	opacity: 0
+	}
+
+	@keyframes bounce-in {
+		0% {
+			transform: scale(0);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	.in-out-translate-demo-wrapper {
+		display: inline-block;
+		margin-left: 200px;
+		position: relative;
+		height: 30px;
+		width : 102px;
+		border: 1px black solid
+	}
+	.in-out-translate-demo-wrapper button {
+		position: absolute;
+		height: 28px;
+		width : 100px;
+	}
+
+	.slide-fade-enter-active {
+		transition: all .7s ;
+	}
+	.slide-fade-leave-active {
+		transition: all .7s ;
+	}
+	.slide-fade-enter, .slide-fade-leave-to {
+		
+		opacity: 0;
+	}
+	.slide-fade-enter {
+		transform: translateX(60px);
+	}
+	.slide-fade-leave-to {
+		transform: translateX(-60px);
+	}
+
+	.component-fade-enter-active, .component-fade-leave-active {
+		transition: all 0.4s ;
+	}
+	.component-fade-enter, .component-fade-leave-to {
+		opacity: 0;
+	}
+
+	.list-enter-active, .list-leave-active {
+	  transition: all 1s;
+	}
+	.list-leave-active {
+	  position: absolute;
+	}
+	.list-enter, .list-leave-to {
+	  opacity: 0;
+	  
+	}
+	.list-enter {
+		transform: translateY(-30px);
+	}
+	.list-leave-to {
+		transform: translateY(30px);
+	}
+
+
+	.list-item {
+		transition: all 1s;
+		display: inline-block;
+		margin-left: 10px ;
+	}
+
+	.transformorigindemo {
+		height : 50px;
+		width : 50px;
+		background: #304050;
+		transition: all 0.3s;
+	}
+	.transformorigindemo:hover {
+		transform-origin: 100% -30%  ;
+		transform : scale(1.9);
+	}
+
+</style>
 <body>
+	<script type="text/javascript">
+		var myMixin = {
+			created : function() {
+				this.hello();
+			},
+			methods : {
+				hello : function() {
+					console.log('Hello ,i am ', this)
+				}
+			}
+		}
+
+		var MixComponent = Vue.extend({
+			mixins : [myMixin]
+		});
+
+		var oneMixComp = new MixComponent();
+
+	</script>
+
+
+	<div id="hook-arguments-examples" v-demo:foo.a.b="message"></div>
+	<script type="text/javascript">
+		Vue.directive('demo', {
+			bind : function(el, binding, vnode) {
+				var s = JSON.stringify ;
+				el.innerHTML = 
+					'name : ' + s(binding.name) + '<br>' + 
+					'Value : ' + s(binding.value) + '<br>' + 
+					'expression : ' + s(binding.expression) + '<br>' +
+					'argument : ' + s(binding.arg) + '<br>' +
+					'modifiers : ' + s(binding.modifiers) + '<br>' +
+					'vnode keys : ' + Object.keys(vnode).join(', ')
+
+			}
+		});
+
+		new Vue({
+			el : '#hook-arguments-examples',
+			data : {
+				message : 'Hello!'
+			}
+		});
+
+	</script>
+
+	<script type="text/javascript">
+		var onearray = Array.apply(null, { length : 20 }).map(function(curval, index) {
+			return index ;
+		});
+		console.log('onearray  : ', onearray);
+	</script>
+	<div id="example-8">
+		<input type="number" v-model.number="firstNumber" step="20">+
+		<input type="number" v-model.number="secondNumber" step="20"> =
+		{{ result }}
+		<p>
+			<animated-integer v-bind:value="firstNumber"></animated-integer> +
+			<animated-integer v-bind:value="secondNumber"></animated-integer> = 
+			<animated-integer v-bind:value="result"></animated-integer>
+		</p>
+	</div>
+	<script type="text/javascript">
+		Vue.component('animated-integer', {
+			template : '<span> {{ tweeningValue }}</span>',
+			props : {
+				value : {
+					type : Number,
+					required : true
+				}
+			},
+			data : function () {
+				return {
+					tweeningValue : 0
+				}
+			},
+			watch : {
+				value : function (newVal, oldVal) {
+					this.tween(oldVal, newVal);
+				}
+			},
+			mounted : function () {
+				this.tween(0, this.value);
+			},
+			methods :  {
+				tween : function (starVal, endVal) {
+					var vm = this;
+					function animate() {
+						if (TWEEN.update()) {
+							requestAnimationFrame(animate);
+						}
+					}
+
+					new TWEEN.Tween( { tweeningValue :  starVal })
+						.to( { tweeningValue : endVal}, 500)
+						.onUpdate(function() {
+							vm.tweeningValue  = this.tweeningValue.toFixed(0)
+						})
+						.start();
+					animate()	;
+				}
+			}
+		});
+
+		new Vue({
+			el : '#example-8',
+			data : {
+				firstNumber : 30,
+				secondNumber : 50
+			},
+			computed : {
+				result : function () {
+					return this.firstNumber + this.secondNumber;
+				}
+			}
+		});
+
+	</script>
+
+
+	<div id="svg-ploygon-demo" class="demo">
+		<svg width="200" height="200" class="demo-svg">
+			<polygon v-bind:points="points" class="demo-polygen" />
+			<circle cx="100" cy="100" r="90" class="demo-circle" />
+		</svg>
+
+		<label>Side : {{ sides }}</label>
+		<input class="demo-range-input" type="range" min="3" max="500" v-model.number="sides">
+		<label>Minimum Radius : {{ minRadius }}%</label>
+		<input class="demo-range-input" type="range" min="10" max="90" v-model.number="minRadius">
+		<label>Update Interval : {{ updateInterval  }}</label>
+		<input class="demo-range-input" type="range" min="10" max="2000" v-model.number="updateInterval">
+
+	</div>
+
+	<script type="text/javascript">
+		new Vue({
+			el : '#svg-ploygon-demo',
+			data : function () {
+				var defaultSides = 10 ;
+				var stats = Array.apply(null, { length : defaultSides})
+					.map(function() {return 100 });
+				return {
+					stats : stats,
+					points: generatePoints(stats),
+					sides : defaultSides,
+					minRadius : 50,
+					interval : null,
+					updateInterval : 500
+				}	
+
+			},
+			mounted : function () {
+				this.resetInterval();
+			},
+			methods : {
+				randomizeStats : function() {
+					var vm = this ;
+					this.stats = this.stats.map(function(){
+						return vm.newRandomValue();
+					});
+				},
+				newRandomValue : function () {
+					return Math.ceil(this.minRadius + Math.random() * (100 - this.minRadius));
+				},
+				resetInterval : function () {
+					var vm = this;
+					clearInterval(this.interval);
+					this.randomizeStats();
+					this.interval = setTimeout(function () {
+						vm.randomizeStats();
+					}, this.updateInterval);
+				}
+			},
+			watch : {
+				sides : function (newSides, oldSides) {
+					var sideDifference = newSides - oldSides ;
+					if (sideDifference > 0) {
+						for( var i =1; i <= sideDifference; i++) {
+							this.stats.push(this.newRandomValue());
+						}
+					}else {
+						var absoluteDifference = Math.abs(sideDifference);
+						for (var i = 1; i <= absoluteDifference; i++) {
+							this.stats.shift();
+						}
+					}
+				},
+				stats : function (newStats) {
+					TweenLite.to(
+						this.$data,
+						this.updateInterval / 1000,
+						{ points : generatePoints(newStats)}
+						);
+				},
+				updateInterval : function () {
+					this.resetInterval();
+				}
+			}
+		}) ;
+
+		function valueToPoint (value, index, total) {
+
+		  var x     = 0
+		  var y     = -value * 0.9
+		  /* 計算旋轉角度*/
+		  var angle = Math.PI * 2 / total * index
+		  /* 計算對應的COS sin */
+		  var cos   = Math.cos(angle)
+		  var sin   = Math.sin(angle)
+		  /*
+			sin(A+B)=sinAcosB+cosAsinB
+			cos(A+B)=cosAcosB-sinAsinB
+
+			y1/L = y/L * cosB + x/L * sinB
+			x1/L = x/L * cosB - y/L * sinB
+
+			x1 = x * cos - y * sin
+			y1 = x * sin + y * cons
+			(100, 100中心點)
+		  */
+		  var tx    = x * cos - y * sin + 100
+		  var ty    = x * sin + y * cos + 100
+		 // console.log('value : ', value, ' ,index : ' , index  , ' ,total : ' , total , ' , tx : ', tx, ' ,ty : ' , ty) ;
+		  return { x: tx, y: ty }
+		}
+
+		function generatePoints (stats) {
+		  var total = stats.length
+		  return stats.map(function (stat, index) {
+		    var point = valueToPoint(stat, index, total)
+		    return point.x + ',' + point.y
+		  }).join(' ')
+		}	
+
+	</script>
+
+
+
+	<style type="text/css">
+		.demo-svg {
+			display: block;
+		}
+		.demo-polygen {
+			fill : #41B883;
+		}
+		.demo-circle {
+			fill: transparent;
+			stroke: #35495E;
+		}
+	</style>
+
+
+
+	<div id="animated-number-two">
+		<input type="number" v-model.number="number" step="20" >
+		<p> {{ animatedNumber }}</p>		
+	</div>
+	<script type="text/javascript">
+		new Vue({
+			el : '#animated-number-two',
+			data : {
+				number : 0,
+				animatedNumber : 0
+			},
+			watch : {
+				number : function(newValue, oldValue) {
+					var vm = this ;
+					function animate() {
+						if (TWEEN.update()) {
+							requestAnimationFrame(animate)
+						}
+					}
+
+					new TWEEN.Tween( {tweeningNumber : oldValue})
+						.easing(TWEEN.Easing.Quadratic.Out)
+						.to( { tweeningNumber : newValue }, 500)
+						.onUpdate(function () {
+							vm.animatedNumber = this.tweeningNumber.toFixed(0)
+						})
+						.start() ;
+
+					animate();	
+				}
+			}
+		});
+	</script>
+
+	<div id="colorAnimation">
+		<input v-model="colorQuery"
+		placeholder="Enter color name or HashCode"
+		v-on:keyup.enter="updateColor" 
+		>
+		<button v-on:click="updateColor">Update</button>
+		<p>Preview :</p>
+		<span 
+			v-bind:style="{ backgroundColor : tweenedCSSColor }"
+			class="example-7-color-preview">			
+		</span>
+		<p>{{ tweenedCSSColor  }}</p>
+	</div>
+	<script type="text/javascript">
+		var Color = net.brehaut.Color;
+		new Vue({
+			el : '#colorAnimation',
+			data : {
+				colorQuery : '',
+				color : {
+					red : 0,
+					green : 0,
+					blue : 0,
+					alpha : 1
+				},
+				tweenedColor : {}
+			},
+			created : function() {
+				this.tweenedColor = Object.assign({}, this.color);
+			},
+			methods : {
+				updateColor : function () {
+					this.color = new Color(this.colorQuery).toRGB();
+					this.colorQuery = '' ;
+				}
+			},
+			computed : {
+				tweenedCSSColor : function () {
+					return new Color({
+						red : this.tweenedColor.red,
+						green : this.tweenedColor.green,
+						blue : this.tweenedColor.blue,
+						alpha : this.tweenedColor.alpha
+					}).toCSS()
+				}
+			},
+			watch : {
+				color : function () {
+					function animate() {
+						if (TWEEN.update()) {
+							requestAnimationFrame(animate);
+						}
+					}
+
+					new TWEEN.Tween(this.tweenedColor)
+						.to(this.color, 750)
+						.start();
+
+					animate()	;
+				}
+			}
+		});
+
+	</script>
+	<style type="text/css">
+		.example-7-color-preview {
+			display: inline-block;
+			width: 50px;
+			height : 50px;
+		}
+	</style>
+
+
+
+	<div id="dynamic-fade-deom">
+		Fade In : <input type="range" v-model="fadeInDuration" min="0" v-bind:max="maxFadeDuration">
+		Fade Out : <input type="range" v-model="fadeOutDuration" min="0" v-bind:max="maxFadeDuration">
+
+		<transition
+			v-bind:css="false"
+			v-on:before-enter="beforeEnter"
+			v-on:enter="enter"
+			v-on:leave="leave"
+		>
+			
+			<p v-if="show">Hello , adjust the bar to check how i change!</p>
+		</transition>
+		<button v-on:click="stop =  true">Stop</button>
+	</div>
+	<style type="text/css">
+		#dynamic-fade-deom {
+			display: flex ;
+			flex-wrap: wrap ;
+			justify-content: space-around;
+			align-items : center;
+			width : 500px ;
+			border : 1px solid #609040;
+			padding: 10px;
+			margin : 10px;
+		}
+
+	</style>
+	<script type="text/javascript">
+		new Vue({
+			el : '#dynamic-fade-deom',
+			data : {
+				show :true,
+				fadeInDuration : 1000,
+				fadeOutDuration : 1000,
+				maxFadeDuration : 3000,
+				stop : false
+			},
+			mounted : function () {
+				this.show = false ;
+			},
+			methods : {
+				beforeEnter : function (el) {
+					el.style.opacity = 0;
+				},
+				enter : function(el, done) {
+					var vm = this;
+					Velocity(
+						el,
+						{ opacity: 1},
+						{
+							duration : this.fadeInDuration ,
+							complete : function () {
+								done();
+								if (!vm.stop) vm.show = false
+							}
+
+						}
+					);
+				},
+				leave : function (el, done) {
+					var vm = this ;
+					Velocity(
+						el,
+						{ opacity: 0 },
+						{ 
+							duration : this.fadeOutDuration,
+							complete : function () {
+								done();
+								vm.show = true;
+							}
+						}
+					);
+				}
+			}
+		});
+	</script>
+
+	<div id="example-5" class="demo">
+		<input v-model="query">
+		<transition-group name="staggered-fade" tag="ul" v-bind:css="false"
+		v-on:before-enter="beforeEnter" 
+		v-on:enter="enter"
+		v-on:leave="leave"
+		>
+			<li v-for="(item, index) in computedList" v-bind:key="item.msg" 
+			v-bind:data-index="index"
+			 >
+				{{ item.msg }}
+			</li>
+		</transition-group>
+	</div>
+	<script type="text/javascript">
+		new Vue({
+			el : '#example-5',
+			data : {
+				query : '',
+				list : [
+					{ msg : 'Bruce Lee' },
+					{ msg : 'Jackie Chan' },
+					{ msg : 'Chunk NOrris'},
+					{ msg : 'Jet Li'},
+					{ msg : 'Kung Fury' }
+
+				]
+			},
+			computed : {
+				computedList : function () {
+					var vm = this ;
+					var newarray =  this.list.filter(function (item) {
+						//console.log('query : ', vm.query, ' filter item : ' , item, item.msg.toLowerCase().indexOf(vm.query.toLowerCase()) !== -1);
+						return (item.msg.toLowerCase().indexOf(vm.query.toLowerCase()) !== -1)
+					}) ;
+
+					console.log('newarray : ', newarray);
+
+					return newarray;
+				}
+			},
+			methods : {
+				beforeEnter : function (el) {
+					el.style.opacity = 0;
+					el.style.height = 0 ;
+				},	
+				enter : function (el, done) {
+					var delay = el.dataset.index * 50 ;
+					//delay = 1000 ;
+					setTimeout(function (){
+						Velocity(
+							el,
+							{ opacity: 1, height: '1.6em'},
+							{ complete : done}
+							);
+					}, delay)
+				},
+				leave : function (el, done) {
+					var delay = el.dataset.index * 150;
+					setTimeout(function() {
+						Velocity(
+							el,
+							{ opacity: 0, height: 0},
+							{ complete : done}
+							);
+					}, delay)
+				}
+			}
+		});
+	</script>
+
+	<div id="sudoku-dom" class="sudokudeom">
+		<strong>Lazy Sudoku</strong>
+		<p>keep hitting the shuffle button</p>
+		<button v-on:click="shuffle">Shuffle</button>
+		<transition-group name="cell" tag="div" class="sudoku-container">
+			<div v-for="cell in cells" v-bind:key="cell.id" class="cell">
+				{{ cell.number }}
+			</div>
+		</transition-group>
+
+	</div>
+	<script type="text/javascript">
+		new Vue({
+			el : '#sudoku-dom',
+			data : {
+				cells : Array.apply(null, {length: 81})
+				.map(function(curVal, index) {
+					return {
+						id : index,
+						number : index %9 + 1
+					}
+				})
+			},
+			methods : {
+				shuffle: function () {
+					this.cells = _.shuffle(this.cells);
+				}
+			}
+		});
+
+	</script>
+	<style type="text/css">
+		.sudoku-container {
+			display: flex ;
+			flex-wrap: wrap ;
+			width : 238px;
+			margin-top : 10 px;
+			margin-bottom: 20 px;
+		}
+
+		.cell {
+			display: flex ;
+			justify-content: space-around;
+			align-items:  center;
+			width: 25px ;
+			height : 25px ;
+			border : 1px solid #aaa;
+			margin-right: -1px ;
+			margin-bottom: -1px ;
+		}
+
+		.cell:nth-child(3n) {
+			margin-right: 0 ;
+		}
+
+		.cell:nth-child(27n) {
+			background-color: #F0F ;
+			margin-bottom: 0 ;
+		}
+
+		.cell-move {
+		  transition: transform 1s;
+		}
+
+	</style>
+
+
+	<div id="list-complete-demo" class="demo">
+		<button v-on:click="add">Add</button>
+		<button v-on:click="remove">Remove</button>
+		<button v-on:click="shuffle">Shuffle</button>
+		<transition-group name="list" tag="p">
+			<span v-for="item in items" v-bind:key="item" class="list-item">
+				{{ item }}
+			</span>
+			
+		</transition-group>
+	</div>
+
+	<script>
+	new Vue({
+	  el: '#list-complete-demo',
+	  data: {
+	    items: [1,2,3,4,5,6,7,8,9],
+	    nextNum: 10
+	  },
+	  methods: {
+	    randomIndex: function () {
+	      return Math.floor(Math.random() * this.items.length)
+	    },
+	    add: function () {
+	      this.items.splice(this.randomIndex(), 0, this.nextNum++)
+	    },
+	    remove: function () {
+	      this.items.splice(this.randomIndex(), 1)
+	    },
+	    shuffle: function () {
+	      this.items = _.shuffle(this.items)
+	    }
+	  }
+	})
+	</script>
+	<style>
+	.list-complete-item {
+	  transition: all 1s; 
+	  display: inline-block;
+	  margin-right: 10px;
+	}
+	.list-complete-enter, .list-complete-leave-to {
+	  opacity: 0;
+	  transform: translateY(30px);
+	}
+	.list-complete-leave-active {
+	 /* position: absolute; */
+	}
+	</style>
+
+
+
+
+
+	<div id="list-dmeo">
+		<button v-on:click="add">Add</button>
+		<button v-on:click="remove">Remove</button>
+		<button v-on:click="shuffle">Shuffle</button>
+		<transition-group name="list" tag="p">
+			<span v-for="item in items" v-bind:key="item" class="list-item">
+				{{ item }}
+			</span>
+			
+		</transition-group>
+		
+	</div>
+	<div class="transformorigindemo">
+		
+	</div>
 	<div id="app">
 		{{ message }}
 	</div>
@@ -70,7 +824,7 @@
 		<child v-bind:message="12"></child><br>
 		<child v-bind:message="coumputedparentMsg"></child><br>
 		next is a two way example
-		<two-way-bindcom :foo.sync="syncdParent" :foocomputed.sync="syncdParent">
+		<two-way-bindcom specialattr="yes" :foo.sync="syncdParent" >
 			HAHA
 		</two-way-bindcom>
 	</div>
@@ -119,13 +873,274 @@
 			</template>			
 		</my-awesome-list>
 	</div>
+	<div id="testif">
+		<if-else>
+		</if-else>
+	</div>
+	<div id="vfor">
+		<li v-for="(item, index) in items">
+			{{ parentMessage}} - {{ index }} -{{ item.message}}
+		</li>	
+	</div>
+	<ul id="vforobj">
+		<li v-for="(value, key, index) in obj">
+			{{ index }} => {{ key }} : {{ value }}
+		</li>
+	</ul>
+	<div id="iterateNum">
+		<span v-for="n in 10">{{ n }}</span>
+	</div>
 
+	<div id="todo-list-exam">
+	  <input
+	    v-model="newTodoText"
+	    v-on:keyup.enter="addNewTodo"
+	    v-on:keyup.alt.67="clearText"
+	    placeholder="Add a todo"
+	  >
+	  <transition name="fade">
+	  <button 
+	  v-on:click="clearText"
+	  v-if="clearablecalc">
+	  Alt+C To clear</button>
+	  </transition >
+	  <ul>
+	    <li
+	      is="todo-itemFull"
+	      v-for="(todo, index) in todos"
+	      v-bind:key="todo"
+	      v-bind:title="todo"
+	      v-on:remove="todos.splice(index, 1)"
+	    ></li>
+	  </ul>
+	</div>
+	<div id="iterate-num">
+		iterateNum
+		<li
+			v-for="n in oddNums"
+		>
+		{{ n }}	
+		</li>
+	</div>
+	<div id="multilinetext">
+		<span>MultiLIne Message is :</span>			
+		<p style="white-space: pre-line"> {{ message }}</p>
+		<br>
+		<textarea placeholder="input multi" v-model="message"></textarea>
+		
+	</div>
+	<div id="checkboxTest">
+		<input type="checkbox" id="checkbox1" v-model="checked">
+		<label for="checkbox1"> {{ checked }}</label>
+	</div>
+	<div id="multicheckboxt">
+		<input type="checkbox" id="alexonly" value="alexonly" v-model="checkedNames">
+		<label for="alexonly">alexonly</label>
+		<input type="checkbox" id="Doris" value="Doris" v-model="checkedNames">
+		<label for="Doris">Doris</label>
+		<input type="checkbox" id="Haou" value="Haou" v-model="checkedNames">
+		<label for="Haou">Haou</label>
+		<br>
+		<span>select names : {{ checkedNames }}</span>
+	</div>
+
+	<div id="vueselect">
+		<select v-model="selected">
+			<option disabled >Choose</option>
+			<option>Spiderman : HomeComing</option>
+			<option>Biohazard</option>
+			<option>wonder women</option>
+		</select>
+		<span>Selected : {{ selected }} </span>
+	</div>
+	<div id="multiselect">
+		<select multiple v-model="selected">
+			<option>physical</option>
+			<option>psychology</option>
+			<option>philosophy</option>			
+		</select>
+		<span>Selected : {{ selected }} </span>
+	</div>
+
+	<div id="dynaVueSel">
+		<select v-model="selected">
+			<option v-for="option in options" v-bind:value="option.value">
+			{{ option.text }}</option>
+			
+		</select>
+		<span>Selected : {{ selected }} </span>
+	</div>
+
+	<div id="innerComponent">
+		<myinner-component></myinner-component>
+	</div>
+
+	<div id="dynamicComponent">
+		<button v-on:click="switchalex">switch to Alex</button>
+		<button v-on:click="switcdoris">switch to Doris</button>
+		<button v-on:click="switchhaou">switch to Haou</button>
+		<component v-bind:is="currentView">
+			
+		</component>
+		
+	</div>
+
+	<div id="treevue">
+		<h1>treevue</h1>
+		<tree-folder v-bind:folder="firstDir"></tree-folder>
+	</div>
+
+	<div id="nextTickSample">
+		{{ message }}
+	</div>
+	<div id="componentNextTick">
+		<com-nexttick></com-nexttick>
+	</div>
+	<div id="transxdemo" >
+		<button @click="show = !show">Toggle render tranx</button><br>
+		<div class="in-out-translate-demo-wrapper">
+			<transition name="slide-fade" mode="in-out">
+				<button v-if="show" key="on">HI welcome!</button>
+				<button v-else key="off">Bye Mylove!</button>
+			</transition>
+		</div>
+
+	</div>
+
+	<div id="animatedWithExterCss">
+		<button @click="show = !show">toggle animatedWithExterCss</button>
+		<transition
+			name="custom-tran"
+			enter-active-class="animated tada"
+			leave-active-class="animated bounceOutRight"
+
+		>
+			<p v-if="show">hello animate</p>
+		</transition>
+	</div>
+	<div id="velocityDemo">
+	  <button @click="show = !show">
+	    Toggle
+	  </button>
+	  <transition
+	    v-on:before-enter="beforeEnter"
+	    v-on:enter="enter"
+	    v-on:leave="leave"
+	    v-bind:css="false"
+	  >
+	    <p v-if="show" style="opacity: 1; transform-origin: left center 0px; font-size: 1em;">
+	      Demo
+	    </p>
+	  </transition>
+	</div>
+
+	<div id="transition-components-demo">
+		<input type="radio" name="switchcomp" value="typea" v-on:click="view = 'v-a'">TypeA</input>
+		<input type="radio" name="switchcomp" value="typeb" v-on:click="view = 'v-b'">TypeB</input>
+		<transition name="component-fade" mode="out-in">
+			<component v-bind:is="view"></component>
+		</transition>
+		<div>aa</div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.14.1/lodash.min.js"></script>
 	<script src="https://unpkg.com/axios@0.12.0/dist/axios.min.js"></script>
 	<script src="https://unpkg.com/lodash@4.13.1/lodash.min.js"></script>
 	<script src="https://cdn.rawgit.com/chrisvfritz/5f0a639590d6e648933416f90ba7ae4e/raw/974aa47f8f9c5361c5233bd56be37db8ed765a09/currency-validator.js"></script>
+	
 	<script type="text/javascript">
 		//register
 		var data = { counter : 0};
+		Vue.component('com-nexttick', {
+			template : `
+				<div>
+				<button v-on:click="updateMsg">Click To Update</button>
+				<span>{{ message }}</span>
+				</div>
+			`,
+			data : function() {
+				return {
+					message : 'not updated'
+				}
+			},
+			methods : {
+				updateMsg : function () {
+					if (this.message === 'updated') {
+						this.message = 'not updated';
+					}else {
+						this.message = 'updated'
+					}
+					
+					console.log('Immediate call : ',this.$el.textContent);
+					this.$nextTick(function () {
+						console.log('next Tick call : ',this.$el.textContent);
+					})
+				}
+			}
+		});
+
+		Vue.component('tree-folder', {
+			template : `
+				<p>
+					<span>{{ folder.name }}</span>
+					<tree-folder-contents :children="folder.children"/>
+				</p>
+			`,
+			props : {
+				folder : {
+					default : function () {
+						return {
+							name : 'default foldername',
+							children : [
+							]
+						}
+					}
+				}
+			}
+		});
+		Vue.component('tree-folder-contents', {
+			template : `
+				<ul>
+					<li v-for="child in children">
+						<tree-folder v-if="child.children" :folder="child"  />
+						<span v-else> {{ child.name }} </span>
+					</li>
+				</ul>
+			`,
+			props: ['children']
+		});
+		Vue.component('todo-itemFull', {
+		  template: `
+		  	<transition name="fade">
+		    <li>
+		      {{ title }}
+		      <button v-on:click="$emit('remove')">X</button>
+		    </li>
+		    </transition>
+		  `,
+		  props: ['title']
+		})
+		Vue.component('if-else', {
+			template : `\
+				<div>\
+				first if\
+				<template v-if="ok">\
+					<h1>verify conditional if  statement</h1>\
+					<p>this is if conditional paragraph</p>\
+				</template>\
+				<template v-else>\
+					<h1>verify conditional else statement</h1>\
+					<p>this is else conditional paragraph</p>\
+				</template>\
+				</div>\
+			`,
+			data : function () {
+				return {
+					ok : true
+				}
+			}
+
+		});
 		Vue.component('my-awesome-list', {
 			template : `<ul>\
 				<slot  name="item"\
@@ -210,7 +1225,261 @@
 				}
 			}
 		});
+		new Vue({
+			el : '#list-dmeo',
+			data : {
+				items : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+				nextNum : 10
+			},
+			methods : {
+				randomIndex : function () {
+					return Math.floor(Math.random() * this.items.length); // based on 0
+				},
+				add : function () {
+					this.items.splice(this.randomIndex(), 0, this.nextNum++);
+				},
+				remove : function () {
+					this.items.splice(this.randomIndex(), 1);
+				},
+				shuffle : function () {
 
+					this.items = _.shuffle(this.items);
+					console.log('shuffle', this.itmes );
+				}
+			}
+		});
+		new Vue({
+			el : '#transition-components-demo',
+			data : {
+				view : 'v-a'
+			},
+			components : {
+				'v-a' : {
+					template : '<div>Component A</div>'
+				},
+				'v-b' : {
+					template : '<div>Component B</div>'
+				}
+			}
+		});
+
+		new Vue({
+			el :　'#velocityDemo',
+			data: {
+				show : true
+			},
+			methods : {
+			    beforeEnter: function (el) {
+			      el.style.opacity = 0
+			    },
+			    enter: function (el, done) {
+			      Velocity(el, { opacity: 1, fontSize: '1.4em' }, { duration: 300 })
+			      Velocity(el, { fontSize: '1em' }, { complete: done })
+			    },
+			    leave: function (el, done) {
+			      Velocity(el, { translateX: '15px', rotateZ: '50deg' }, { duration: 600 })
+			      Velocity(el, { rotateZ: '100deg' }, { loop: 2 })
+			      Velocity(el, {
+			        rotateZ: '45deg',
+			        translateY: '30px',
+			        translateX: '30px',
+			        opacity: 0
+			      }, { complete: done })
+			    }
+			  }
+		});
+		new Vue({
+			el : '#animatedWithExterCss',
+			data : {
+				show : true
+			}
+		});
+		new Vue({
+			el : '#transxdemo',
+			data : {
+				show : true
+			}
+		});
+		var vmtick = new Vue({
+			el : '#nextTickSample',
+			data : {
+				message : 'new message'
+			}
+		});
+		vmtick.message = 'new message'
+		console.log('vmtick compare immediate after create instance : ' ,vmtick.$el.textContent.trim() === 'new message');
+		Vue.nextTick(function() {
+					console.log('vmtick compare immediate after Vue NextTick : ' , vmtick.$el.textContent.trim() === 'new message');
+					console.log('vmtick.$el.textContent : ', vmtick.$el.textContent.trim());
+		})
+		new Vue({
+			el : '#componentNextTick'
+
+		});
+
+		new Vue({
+			el : '#treevue',
+			data : {
+				firstDir : {
+							name : 'file124 foldername',
+							children : [
+								{name : 'file1' },
+								{name : 'file2' },
+								{name : 'file3' , children : [{name : 'son1'}, {name : 'son2'}]}
+							]
+						}
+			}
+		});
+		new Vue({
+			el : '#dynamicComponent',
+			data : {
+				currentView : {
+					template : '<p>Welcome default</p>'
+				}
+			},
+			methods : {
+				switchalex : function () {
+					this.currentView =  {
+						template : '<p>Welcome Alex</p>'
+					}
+				},
+				switcdoris : function () {
+					this.currentView =  {
+						template : '<p>Welcome Doris</p>'
+					}
+				},
+				switchhaou : function () {
+					this.currentView =  {
+						template : '<p>Welcome Haou</p>'
+					}
+				}
+
+			}
+		});
+
+		new Vue({
+			el : '#innerComponent',
+			components : {
+				'myinner-component' :  {
+					template : '<div>this is inner component</div>'
+				}
+			}
+		});
+		new Vue({
+			el : '#dynaVueSel',
+			data : {
+				selected : '',
+				options : [
+					{text : 'Pop Music' , value : 'pop'},
+					{text : 'Clasic Music' , value : 'clasic'},
+					{text : 'Jazz' , value : 'jazzM'}
+				]
+			}
+		});
+		new Vue({
+			el : '#multiselect',
+			data : {
+				selected : []
+			}
+		});
+		new Vue({
+			el : '#vueselect',
+			data : {
+				selected : ''
+			}
+		});
+
+		new Vue({
+			el : '#multicheckboxt',
+			data : {
+				checkedNames : []
+			}
+
+		});
+		new Vue({
+			el : '#checkboxTest',
+			data : {
+				checked : false
+			}
+		});
+		new Vue({
+			el : '#multilinetext',
+			data : {
+				message : ''
+			}
+
+		});
+
+		new Vue({
+			el : '#iterate-num',
+			data : {
+				numbers : [1, 2, 3, 4, 5, 6, 7]
+			},
+			computed: {
+				oddNums : function () {
+					return this.numbers.filter(function (evaluatedNum) {
+						return (evaluatedNum % 2) !== 0 ;
+					});
+				}
+			}
+
+		});
+		new Vue({
+			el : '#todo-list-exam',
+			data : {
+				newTodoText : '',
+				todos: [
+					'Clean your room',
+					'go home as soon as possible',
+					'get a deserved promotion'
+				]
+			},
+			computed : {
+				clearablecalc : function () {
+					console.log('calc clearablecalc');
+					return this.newTodoText !== '';
+				}
+			},
+			methods : {
+				addNewTodo : function () {
+					//console.log('prepare to addNewTodo');
+					this.todos.push(this.newTodoText);
+					this.newTodoText = '';
+					//console.log('End to addNewTodo');
+				},
+				clearText : function () {
+					this.newTodoText = '';
+				}
+			}
+		});
+
+		new Vue({
+			el : '#iterateNum'
+		}),
+		new Vue({
+			el :'#vforobj',
+			data : {
+				obj : {
+					firstkey : 'doriskey',
+					secondkey : 'haokey',
+					thirdkey : 'finalkey'
+				}
+			}
+		});
+		new Vue({
+			el : '#vfor',
+			data : {
+				parentMessage : 'ParentMSG',
+				items : [
+					{ message : 'Doris'},
+					{ message : 'ALexHau'}
+				]
+			}
+		});
+
+		new Vue({
+			el : '#testif'
+		});
 		new Vue({
 			el : '#awesomelist'
 		});
@@ -240,10 +1509,20 @@
 
 
 		Vue.component('two-way-bindcom', {
-			template : '<div><input v-model="foocomputed"> <br><slot>display if no content to distrubuted</slot></div>',
+			template : `
+			<div>
+				<input v-model="foocomputed"> 
+				<br><slot>display if no content to distrubuted</slot>
+			</div>
+			`,
 			props : ['foo'],
+			data : function () {
+				return {
+					foocomputed : ''
+				}
+			},
 			computed : {
-				foocomputed : function () {
+				foocomputedd : function () {
 					console.log('this.foo : ' + this.foo);
 					var tempvar = this.foo;
 
@@ -254,6 +1533,10 @@
 				foocomputed : function (newQ) {
 					console.log('foocomputed changed : ' + newQ);
 					this.$emit('update:foo', newQ);
+				},
+				foo : function (newfoo) {
+					console.log('foo changed : ' + newfoo);
+					this.foocomputed = this.foo;
 				}
 			},
 		});
